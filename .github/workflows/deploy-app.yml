@@ -48,7 +48,7 @@ jobs:
 
             Write-Host "Identificada nova versão $nextVersion do aplicativo..."
 
-            echo "NEXT_VERSION=$nextVersion" >> $GITHUB_ENV 
+            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV
 
     - name: "Publish"
       run: |
