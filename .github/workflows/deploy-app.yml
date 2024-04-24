@@ -13,7 +13,7 @@ env:
   BUILD_PLATFORM: AnyCPU
   CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj
   HELLO_ARTIFACT_NAME: DoCoffee.App
-  PUBLISH_OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Release\app.publish\
+  PUBLISH_OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Release\app.publish
       
 jobs:
 
@@ -61,5 +61,5 @@ jobs:
         username: ${{ secrets.FTP_USER }}
         password: ${{ secrets.FTP_PASSWD }}
         server-dir: /docoffee/
-        local-dir: ${{ env.PUBLISH_OUTPUT_DIRECTORY }}
+        local-dir: ./docoffee-app/src/DoCoffee.App/bin/Release/app.publish/
         port: ${{ secrets.FTP_PORT }}
