@@ -1,0 +1,65 @@
+name: 'Deploy DoCoffee'
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/DoCoffee.App/**'
+
+  workflow_dispatch: # Allow you to run this workflow manually from the Action tab
+  
+env:
+  BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: AnyCPU
+  CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj
+  HELLO_ARTIFACT_NAME: DoCoffee.App
+  PUBLISH_OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Release\app.publish
+      
+jobs:
+
+  build-and-publish:
+    runs-on: windows-latest 
+    
+    steps:
+    - name: "Checkout Code"
+      uses: actions/checkout@v4
+                    
+    - name: 'Setup MSBuild'
+      uses: microsoft/setup-msbuild@v1.3.1
+
+    - name: 'Setup Nuget'
+      uses: NuGet/setup-nuget@v1.2.0
+
+    - name: 'Nuget Restore Packages'
+      run: nuget restore ${{ env.CSPROJ_PATH }} -PackagesDirectory "src/packages"
+
+    - name: "Build"
+      run: msbuild ${{ env.CSPROJ_PATH }} /t:build /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=${{ env.BUILD_PLATFORM }}
+
+    - name: "Increment Revision from Application Manifest"
+      id: 'incrementRevision'
+      run: |
+            $body = @{url="${{ secrets.APP_MANIFEST_URL }}"}
+            $contentType = "application/x-www-form-urlencoded"
+            $url = "${{ secrets.FUNCTION_CLICKONCE_DISCOVERY_URL }}"
+            $payload = Invoke-RestMethod -Method POST -Uri $url -body $body -ContentType $contentType
+
+            $nextVersion = "$($payload.version.major).$($payload.version.minor).$($payload.version.patch).$($payload.version.revision + 1)"
+
+            Write-Host "Identificada nova versão $nextVersion do aplicativo..."
+
+            echo "nextVersion=$nextVersion" >> $GITHUB_OUTPUT 
+
+    - name: "Publish"
+      run: |
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ steps.incrementRevision.outputs.nextVersion }}" /p:MinimumRequiredVersion="${{ steps.incrementRevision.outputs.nextVersion }}" /p:VersionAssembly="${{ steps.incrementRevision.outputs.nextVersion }}"
+    
+    - name: Sync Files
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_HOSTNAME }}
+        username: ${{ secrets.FTP_USER }}
+        password: ${{ secrets.FTP_PASSWD }}
+        server-dir: /docoffee/
+        local-dir: ${{ env.PUBLISH_OUTPUT_DIRECTORY }}
+        port: ${{ secrets.FTP_PORT }}
