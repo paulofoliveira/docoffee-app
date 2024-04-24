@@ -48,11 +48,11 @@ jobs:
 
             Write-Host "Identificada nova versão $nextVersion do aplicativo..."
 
-            echo "nextVersion=$nextVersion" >> $GITHUB_OUTPUT 
+            echo "NEXT_VERSION=$nextVersion" >> $GITHUB_ENV 
 
     - name: "Publish"
       run: |
-        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ steps.incrementRevision.outputs.nextVersion }}" /p:MinimumRequiredVersion="${{ steps.incrementRevision.outputs.nextVersion }}" /p:VersionAssembly="${{ steps.incrementRevision.outputs.nextVersion }}"
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ env.NEXT_VERSION }}" /p:MinimumRequiredVersion="${{ env.NEXT_VERSION }}" /p:VersionAssembly="${{ env.NEXT_VERSION }}"
     
     - name: Sync Files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
