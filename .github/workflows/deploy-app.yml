@@ -20,6 +20,11 @@ jobs:
     runs-on: windows-latest 
     
     steps:
+    - name: "Test Open Port"
+      run: |
+        choco install tcping -y
+        tcping ${{ secrets.FTP_HOSTNAME }} ${{ secrets.FTP_PORT }}
+
     - name: "Checkout Code"
       uses: actions/checkout@v4
                     
