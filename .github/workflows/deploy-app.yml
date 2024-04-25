@@ -58,9 +58,9 @@ jobs:
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_HOSTNAME }}
+        port: ${{ secrets.FTP_PORT }}
         username: ${{ secrets.FTP_USER }}
         password: ${{ secrets.FTP_PASSWD }}
         server-dir: /docoffee/
-        local-dir: ./src/DoCoffee.App/bin/Release/app.publish/
-        port: ${{ secrets.FTP_PORT }}
+        local-dir: ./src/DoCoffee.App/bin/Release/app.publish/  
         protocol: ftp
