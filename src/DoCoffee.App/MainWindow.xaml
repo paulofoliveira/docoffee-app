@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:DoCoffee.App"
         mc:Ignorable="d"
         Title="Do Coffee Application" Height="400" Width="600"    
-        Background="AntiqueWhite"
-        WindowStartupLocation="CenterScreen">    
+        Background="GreenYellow"
+        WindowStartupLocation="CenterScreen">
     <Grid>
-        
+
     </Grid>
 </Window>
