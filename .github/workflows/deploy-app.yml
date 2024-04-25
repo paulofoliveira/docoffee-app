@@ -64,3 +64,4 @@ jobs:
         server-dir: /docoffee/
         local-dir: ./src/DoCoffee.App/bin/Release/app.publish/  
         protocol: ftp
+        log-level: verbose
