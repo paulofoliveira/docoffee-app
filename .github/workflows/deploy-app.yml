@@ -62,7 +62,4 @@ jobs:
         username: ${{ secrets.FTP_USER }}
         password: ${{ secrets.FTP_PASSWD }}
         server-dir: /docoffee/
-        local-dir: ./src/DoCoffee.App/bin/Release/app.publish/  
-        protocol: ftp
-        log-level: verbose
-        timeout: 60000
+        local-dir: ./src/DoCoffee.App/bin/Release/app.publish/
