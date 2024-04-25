@@ -52,7 +52,7 @@ jobs:
 
     - name: "Publish"
       run: |
-        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ env.NEXT_VERSION }}" /p:MinimumRequiredVersion="${{ env.NEXT_VERSION }}" /p:VersionAssembly="${{ env.NEXT_VERSION }}"
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ env.NEXT_VERSION }}" /p:MinimumRequiredVersion="${{ env.NEXT_VERSION }}" /p:VersionNumber="${{ env.NEXT_VERSION }}"
     
     - name: Sync Files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
