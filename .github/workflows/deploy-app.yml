@@ -32,10 +32,7 @@ jobs:
 
     - name: 'Nuget Restore Packages'
       run: nuget restore ${{ env.CSPROJ_PATH }} -PackagesDirectory "src/packages"
-
-    - name: "Build"
-      run: msbuild ${{ env.CSPROJ_PATH }} /t:build /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=${{ env.BUILD_PLATFORM }}
-
+      
     - name: "Increment Revision from Application Manifest"
       id: 'incrementRevision'
       run: |
@@ -48,7 +45,10 @@ jobs:
 
             Write-Host "Identificada nova versão $nextVersion do aplicativo..."
 
-            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV
+            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV      
+
+    - name: "Build"
+      run: msbuild ${{ env.CSPROJ_PATH }} /t:build /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=${{ env.BUILD_PLATFORM }} /p:VersionNumber="${{ env.NEXT_VERSION }}"
 
     - name: "Publish"
       run: |
