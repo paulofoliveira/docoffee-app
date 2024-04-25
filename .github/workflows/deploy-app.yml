@@ -63,3 +63,4 @@ jobs:
         server-dir: /docoffee/
         local-dir: ./src/DoCoffee.App/bin/Release/app.publish/
         port: ${{ secrets.FTP_PORT }}
+        protocol: ftp
