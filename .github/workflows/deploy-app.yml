@@ -13,6 +13,7 @@ env:
   BUILD_PLATFORM: AnyCPU
   CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj
   HELLO_ARTIFACT_NAME: DoCoffee.App
+  OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Release\app.publish
       
 jobs:
 
@@ -51,12 +52,17 @@ jobs:
       run: |
         msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ env.NEXT_VERSION }}" /p:MinimumRequiredVersion="${{ env.NEXT_VERSION }}" /p:VersionAssembly="${{ env.NEXT_VERSION }}"
     
-    - name: Sync Files
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-      with:
-        server: ${{ secrets.FTP_HOSTNAME }}
-        port: ${{ secrets.FTP_PORT }}
-        username: ${{ secrets.FTP_USER }}
-        password: ${{ secrets.FTP_PASSWD }}
-        server-dir: /docoffee/
-        local-dir: ./src/DoCoffee.App/bin/Release/app.publish/
+    - name: "Setup WinSCP"
+      run: |
+        choco install winscp -y
+    
+    - name: "Deploy Files"
+      run: |        
+        winscp.com /command "open ftp://${{ secrets.FTP_USER }}`:${{ secrets.FTP_PASSWD }}@${{ secrets.FTP_HOSTNAME }}`:${{ secrets.FTP_PORT }}" "option batch on" "option confirm off" "put ${{ env.OUTPUT_DIRECTORY }}\* /docoffee/" "exit"
+
+
+
+
+
+
+
