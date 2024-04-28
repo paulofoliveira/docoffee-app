@@ -29,8 +29,8 @@ jobs:
       uses: microsoft/variable-substitution@v1 
       with:
           files: './src/DoCoffee.App/App.config'
-        env:
-          ApiKey: ${{ secrets.API_KEY }}
+      env:
+        ApiKey: ${{ secrets.API_KEY }}
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
