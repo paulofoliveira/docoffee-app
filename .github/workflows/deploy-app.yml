@@ -25,9 +25,12 @@ jobs:
     - name: "Checkout Code"
       uses: actions/checkout@v4
 
-    - name: "Write Config Release"
-      run: |
-        ${{ secrets.APPCONFIG_RELEASE_CONTENT }} >> ./src/DoCoffee.App/App.Release.config
+    - name: "Change App.config"
+      uses: microsoft/variable-substitution@v1 
+      with:
+          files: './src/DoCoffee.App/App.config'
+        env:
+          ApiKey: ${{ secrets.API_KEY }}
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
