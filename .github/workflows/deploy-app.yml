@@ -41,8 +41,7 @@ jobs:
     - name: 'Nuget Restore Packages'
       run: nuget restore ${{ env.CSPROJ_PATH }} -PackagesDirectory "src/packages"
       
-    - name: "Increment Revision"
-      id: 'incrementRevision'
+    - name: "Increment Revision"     
       run: |
             $body = @{url="${{ secrets.APP_MANIFEST_URL }}"}
             $contentType = "application/x-www-form-urlencoded"
