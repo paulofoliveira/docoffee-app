@@ -66,9 +66,8 @@ jobs:
       run: |        
         winscp.com /command "open ftp://${{ secrets.FTP_USER }}`:${{ secrets.FTP_PASSWD }}@${{ secrets.FTP_HOSTNAME }}`:${{ secrets.FTP_PORT }}" "option batch on" "option confirm off" "put ${{ env.OUTPUT_DIRECTORY }}\* /docoffee/" "exit"
 
-
-
-
-
-
-
+    - name: "Notify Team in Google Chat"
+      run: |
+        $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"
+        $body = @{ "text" = "*Atenção*: Publicado aplicativo *DoCoffee* na versão *${{ env.NEXT_VERSION }}*." } | ConvertTo-Json
+        Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
