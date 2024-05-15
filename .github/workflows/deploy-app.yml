@@ -50,7 +50,7 @@ jobs:
 
             $nextVersion = "$($payload.version.major).$($payload.version.minor).$($payload.version.patch).$($payload.version.revision + 1)"
 
-            Write-Host "Identificada nova versão $nextVersion do aplicativo..."
+            Write-Host "Identificada nova versão $nextVersion a partir do manifesto atual do aplicativo..."
 
             echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV     
 
