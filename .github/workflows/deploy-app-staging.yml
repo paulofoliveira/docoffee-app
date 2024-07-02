@@ -25,11 +25,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: "Create App.config"
-      run: |
-            New-Item -ItemType Directory -Force -Path "${{ env.OUTPUT_DIRECTORY }}"
-            $appConfigPath = "${{ env.OUTPUT_DIRECTORY }}\App.Staging.config"
+      run: |            
+            $appConfigPath = "src\DoCoffee.App\App.Staging.config"
             [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.APP_STAGING_CONFIG }}")) > $appConfigPath
-            Get-Content $appConfigPath
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
