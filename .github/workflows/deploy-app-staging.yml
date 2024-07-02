@@ -1,0 +1,72 @@
+name: 'Deploy DoCoffee (Staging)'
+
+on:
+  push:
+    branches: [ "staging" ]
+    paths:
+      - 'src/DoCoffee.App/**'
+
+  workflow_dispatch: # Allow you to run this workflow manually from the Action tab
+  
+env:
+  BUILD_CONFIGURATION: Staging
+  BUILD_PLATFORM: AnyCPU
+  CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
+  OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
+      
+jobs:
+
+  build-and-publish:
+    runs-on: windows-latest 
+    
+    steps:
+
+    - name: "Checkout Code"
+      uses: actions/checkout@v4
+
+    - name: "Create App.config"
+      run: |
+            New-Item -ItemType Directory -Force -Path "${{ env.OUTPUT_DIRECTORY }}"
+            $appConfigPath = "${{ env.OUTPUT_DIRECTORY }}\App.Staging.config"
+            [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(${{ secrets.APP_STAGING_CONFIG }})) > $appConfigPath
+                    
+    - name: 'Setup MSBuild'
+      uses: microsoft/setup-msbuild@v2
+
+    - name: 'Setup Nuget'
+      uses: nuget/setup-nuget@v2
+
+    - name: 'Nuget Restore Packages'
+      run: nuget restore ${{ env.CSPROJ_PATH }} -PackagesDirectory "src/packages"
+      
+    - name: "Increment Revision"     
+      run: |
+            $body = @{url="${{ secrets.APP_MANIFEST_STAGING_URL }}"}
+            $contentType = "application/x-www-form-urlencoded"
+            $url = "${{ secrets.FUNCTION_CLICKONCE_DISCOVERY_URL }}"
+            $payload = Invoke-RestMethod -Method POST -Uri $url -body $body -ContentType $contentType
+
+            $nextVersion = "$($payload.version.major).$($payload.version.minor).$($payload.version.patch).$($payload.version.revision + 1)"
+
+            Write-Host "Identificada nova versão $nextVersion a partir do manifesto atual do aplicativo..."
+
+            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV     
+
+    - name: "Publish"
+      run: |
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ env.NEXT_VERSION }}" /p:MinimumRequiredVersion="${{ env.NEXT_VERSION }}" /p:VersionAssembly="${{ env.NEXT_VERSION }}"
+    
+    - name: "Setup WinSCP"
+      run: |
+        choco install winscp -y
+    
+    - name: "Deploy Files"
+      run: |        
+        winscp.com /command "open ftp://${{ secrets.FTP_USER }}`:${{ secrets.FTP_PASSWD }}@${{ secrets.FTP_HOSTNAME }}`:${{ secrets.FTP_PORT }}" "option batch on" "option confirm off" "put ${{ env.OUTPUT_DIRECTORY }}\* /docoffee/" "exit"
+
+    - name: "Notify Team in Google Chat"
+      run: |
+        $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
+        $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
+        $body = @{ "text" = "Publicada versão *${{ env.NEXT_VERSION }}* do aplicativo *DoCoffee* no ambiente de $environmentName." } | ConvertTo-Json
+        Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
