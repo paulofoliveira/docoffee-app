@@ -38,6 +38,7 @@
 		<BootstrapperEnabled>false</BootstrapperEnabled>
 		<NuGetPackageImportStamp>
 		</NuGetPackageImportStamp>
+		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<PlatformTarget>AnyCPU</PlatformTarget>
@@ -103,6 +104,7 @@
 			<Generator>MSBuild:Compile</Generator>
 			<SubType>Designer</SubType>
 		</ApplicationDefinition>
+		<Compile Include="Services\EncrpytionService.cs" />
 		<Page Include="MainWindow.xaml">
 			<Generator>MSBuild:Compile</Generator>
 			<SubType>Designer</SubType>
