@@ -33,6 +33,9 @@ namespace DoCoffee.App.Services
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
+            if (EnvironmentHelper.IsDevelopment())
+                return value;
+
             using var des = new DESCryptoServiceProvider();
             using var ms = new MemoryStream();
             var input = Convert.FromBase64String(value.Replace(" ", "+"));
