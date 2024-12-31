@@ -12,8 +12,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="33*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="33*" />
         </Grid.RowDefinitions>
         <Label x:Name="ApiKeyLabel" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Content="ApiKey: DesignApiKey" Background="White" />
+        <Label x:Name="DecryptedSecretLabel" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Content="Decrypted Secret: XXXXXX" Background="White" />
     </Grid>
 </Window>
