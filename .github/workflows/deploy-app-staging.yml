@@ -41,13 +41,8 @@ jobs:
       
     - name: "Increment Revision"     
       run: |
-            $body = @{url="${{ secrets.APP_MANIFEST_STAGING_URL }}"}
-            $contentType = "application/x-www-form-urlencoded"
-            $url = "${{ secrets.FUNCTION_CLICKONCE_DISCOVERY_URL }}"
-            $payload = Invoke-RestMethod -Method POST -Uri $url -body $body -ContentType $contentType
-
-            $nextVersion = "$($payload.version.major).$($payload.version.minor).$($payload.version.patch).$($payload.version.revision + 1)"
-
+            $actualVersion = ..\..\..\..\..\build\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+            $nextVersion = "$($actualVersion.Version.Major).$($actualVersion.Version.Minor).$($actualVersion.Version.Patch).$($actualVersion.Version.Revision + 1)"
             Write-Host "Identificada nova versão $nextVersion a partir do manifesto atual do aplicativo..."
 
             echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV     
