@@ -36,7 +36,7 @@ jobs:
 
             $mySecret = .\Encrypt.ps1 -Value ${{ secrets.MY_SECRET }} -EncryptionKey $encryptionKey
 
-            .\CreateOrUpdateAppSettings.ps1 -FilePath "App.Staging.config" -BasePath "${{ env.OUTPUT_DIRECTORY }}" -Key "MySecret" -Value $mySecret -XmlDocumentTransform $true
+            .\CreateOrUpdateAppSettings.ps1 -FilePath "App.Staging.config" -BasePath "${{ github.workspace }}\src\DoCoffee.App" -Key "MySecret" -Value $mySecret -XmlDocumentTransform $true
 
             .\CreateOrUpdateResx.ps1 -FilePath "${{ github.workspace }}\src\DoCoffee.App\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
                     
