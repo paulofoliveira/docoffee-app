@@ -14,10 +14,10 @@ namespace DoCoffee.App
 
             ApiKeyLabel.Content = $"ApiKey: {ConfigurationManager.AppSettings["ApiKey"]}";
 
-            var encryptedSecret = ConfigurationManager.AppSettings["EncryptedSecret"];
+            var encryptedSecret = ConfigurationManager.AppSettings["MySecret"];
             var decryptedSecret = App.EncryptionService.Decrypt(encryptedSecret);
 
-            DecryptedSecretLabel.Content = $"Decrypted Secret: {decryptedSecret}";
+            DecryptedSecretLabel.Content = $"MySecret: {decryptedSecret}";
         }
     }
 }
