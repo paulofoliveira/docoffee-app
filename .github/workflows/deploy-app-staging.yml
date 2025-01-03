@@ -13,6 +13,7 @@ env:
   BUILD_PLATFORM: AnyCPU
   CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
   OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
+  BUILD_DIRECTORY: ${{ github.workspace }}\build
       
 jobs:
 
@@ -29,6 +30,16 @@ jobs:
             New-Item -ItemType Directory -Force -Path "${{ env.OUTPUT_DIRECTORY }}"
             $appConfigPath = "${{ env.OUTPUT_DIRECTORY }}\App.Staging.config"
             [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.APP_STAGING_CONFIG }}")) > $appConfigPath
+
+            Set-Location ${{ env.BUILD_DIRECTORY }}
+
+            $encryptionKey = .\GenerateRandomCode.ps1
+
+            $mySecret = .\Encrypt.ps1 -Value ${{ secrets.MY_SECRET }} -EncryptionKey $encryptionKey
+
+            .\CreateOrUpdateAppSettings.ps1 -FilePath "App.Staging.config" -BasePath "${{ env.OUTPUT_DIRECTORY }}" -Key "MySecret" -Value $mySecret -XmlDocumentTransform $true
+
+            .\CreateOrUpdateResx.ps1 -FilePath "${{ github.workspace }}\src\DoCoffee.App\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
@@ -41,13 +52,8 @@ jobs:
       
     - name: "Increment Revision"     
       run: |
-            $body = @{url="${{ secrets.APP_MANIFEST_STAGING_URL }}"}
-            $contentType = "application/x-www-form-urlencoded"
-            $url = "${{ secrets.FUNCTION_CLICKONCE_DISCOVERY_URL }}"
-            $payload = Invoke-RestMethod -Method POST -Uri $url -body $body -ContentType $contentType
-
-            $nextVersion = "$($payload.version.major).$($payload.version.minor).$($payload.version.patch).$($payload.version.revision + 1)"
-
+            $actualVersion = ..\..\..\..\..\build\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+            $nextVersion = "$($actualVersion.Version.Major).$($actualVersion.Version.Minor).$($actualVersion.Version.Patch).$($actualVersion.Version.Revision + 1)"
             Write-Host "Identificada nova versão $nextVersion a partir do manifesto atual do aplicativo..."
 
             echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV     

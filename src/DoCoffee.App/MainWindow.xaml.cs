@@ -11,7 +11,13 @@ namespace DoCoffee.App
         public MainWindow()
         {
             InitializeComponent();
+
             ApiKeyLabel.Content = $"ApiKey: {ConfigurationManager.AppSettings["ApiKey"]}";
+
+            var encryptedSecret = ConfigurationManager.AppSettings["MySecret"];
+            var decryptedSecret = App.EncryptionService.Decrypt(encryptedSecret);
+
+            DecryptedSecretLabel.Content = $"MySecret: {decryptedSecret}";
         }
     }
 }

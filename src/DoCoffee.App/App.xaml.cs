@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using DoCoffee.App.Services;
 using System.Windows;
+using ApplicationResources = DoCoffee.App.Properties.Resources;
 
 namespace DoCoffee.App
 {
@@ -13,5 +9,6 @@ namespace DoCoffee.App
     /// </summary>
     public partial class App : Application
     {
+        public static EncrpytionService EncryptionService = new EncrpytionService(ApplicationResources.EncryptionKey);
     }
 }
