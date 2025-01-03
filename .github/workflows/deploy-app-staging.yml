@@ -13,6 +13,7 @@ env:
   BUILD_PLATFORM: AnyCPU
   CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
   OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
+  BUILD_DIRECTORY: ${{ github.workspace }}\build
       
 jobs:
 
@@ -29,6 +30,16 @@ jobs:
             New-Item -ItemType Directory -Force -Path "${{ env.OUTPUT_DIRECTORY }}"
             $appConfigPath = "${{ env.OUTPUT_DIRECTORY }}\App.Staging.config"
             [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.APP_STAGING_CONFIG }}")) > $appConfigPath
+
+            Set-Location ${{ env.BUILD_DIRECTORY }}
+
+            $encryptionKey = .\GenerateRandomCode.ps1
+
+            $mySecret = .\Encrypt.ps1 -Value ${{ secrets.MY_SECRET }} -EncryptionKey $encryptionKey
+
+            .\CreateOrUpdateAppSettings.ps1 -FilePath "App.Staging.config" -BasePath "${{ env.OUTPUT_DIRECTORY }}" -Key "MySecret" -Value $mySecret -XmlDocumentTransform $true
+
+            .\CreateOrUpdateResx.ps1 -FilePath "${{ github.workspace }}\src\DoCoffee.App\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
