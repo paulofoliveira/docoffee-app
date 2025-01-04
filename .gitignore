@@ -396,5 +396,3 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-/src/DoCoffee.App/App.Release.config
-/src/DoCoffee.App/App.Staging.config
