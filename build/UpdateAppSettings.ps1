@@ -4,13 +4,11 @@ param (
     [string]$Value
 )
 
-$absoluteFilePath = Join-Path -Path $BasePath -ChildPath $FilePath
-
-if (-Not (Test-Path -Path $absoluteFilePath)) {
-    throw "File or directory not found: $absoluteFilePath"
+if (-Not (Test-Path -Path $FilePath)) {
+    throw "File or directory not found: $FilePath"
 }
 
-[xml]$config = Get-Content $absoluteFilePath
+[xml]$config = Get-Content $FilePath
 
 $addNode = $config.configuration.appSettings.add | Where-Object { $_.key -eq $Key }
 
@@ -23,4 +21,4 @@ else
 	throw "$Key not found in $FilePath on appSettings section!"
 }
 
-$config.Save($absoluteFilePath)
+$config.Save($FilePath)
