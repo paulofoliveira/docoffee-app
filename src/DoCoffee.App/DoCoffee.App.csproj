@@ -103,6 +103,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ConfigurationManagerHelper.cs" />
     <Compile Include="EnvironmentHelper.cs" />
     <Compile Include="Services\EncrpytionService.cs" />
     <Page Include="MainWindow.xaml">
