@@ -34,7 +34,7 @@ jobs:
 
             $encryptionKey = .\GenerateRandomCode.ps1
 
-            $mySecret = .\Encrypt.ps1 -Value ${{ secrets.MY_SECRET }} -EncryptionKey $encryptionKey
+            $mySecret = .\Encrypt.ps1 -Value "${{ secrets.MY_SECRET }}" -EncryptionKey $encryptionKey
 
             .\CreateOrUpdateAppSettings.ps1 -FilePath "App.Staging.config" -BasePath "${{ github.workspace }}\src\DoCoffee.App" -Key "MySecret" -Value $mySecret -XmlDocumentTransform $true
 
