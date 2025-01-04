@@ -35,11 +35,12 @@ jobs:
             Write-Host "Generating EncryptionKey..."
             $encryptionKey = .\GenerateEncryptionKey.ps1
             
-            Write-Host "Encrypting secret with EncryptionKey..."
+            Write-Host "Encrypting secrests with EncryptionKey..."
             $mySecret = .\Encrypt.ps1 -Value "${{ secrets.MY_SECRET }}" -EncryptionKey $encryptionKey
 
-            Write-Host "Updating AppSettings with encrypted secret..."
+            Write-Host "Updating AppSettings..."
             .\UpdateAppSettings.ps1 -FilePath $appConfigPath -Key "MySecret" -Value $mySecret
+            .\UpdateAppSettings.ps1 -FilePath $appConfigPath -Key "ApiKey" -Value "${{ secrets.STAGING_APIKEY }}"
 
             Write-Host "Updating resx with EncryptionKey..."
             .\UpdateResx.ps1 -FilePath "${{ env.APPLICATION_DIRECTORY }}\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
