@@ -14,10 +14,7 @@ namespace DoCoffee.App
 
                 var value = ConfigurationManager.AppSettings[key];
 
-                if (EnvironmentHelper.IsDevelopment())
-                    return value;
-
-                return App.EncryptionService.Decrypt(value);
+                return value == null ? throw new NullReferenceException($"{key} cannot be found!") : App.EncryptionService.Decrypt(value);
             }
         }
     }
