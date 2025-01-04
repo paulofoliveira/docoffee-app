@@ -11,7 +11,8 @@ on:
 env:
   BUILD_CONFIGURATION: Staging
   BUILD_PLATFORM: AnyCPU
-  CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
+  CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj
+  APPLICATION_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App  
   OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
   BUILD_DIRECTORY: ${{ github.workspace }}\build
       
@@ -25,20 +26,23 @@ jobs:
     - name: "Checkout Code"
       uses: actions/checkout@v4
 
-    - name: "Create App.config"
+    - name: "Prepare App.config"
       run: |            
-            $appConfigPath = "src\DoCoffee.App\App.Staging.config"
-            [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.APP_STAGING_CONFIG }}")) > $appConfigPath
+            $appConfigPath = "${{ env.APPLICATION_DIRECTORY }}\App.Staging.config"
 
             Set-Location ${{ env.BUILD_DIRECTORY }}
 
-            $encryptionKey = .\GenerateRandomCode.ps1
-
+            Write-Host "Generating EncryptionKey..."
+            $encryptionKey = .\GenerateEncryptionKey.ps1
+            
+            Write-Host "Encrypting secret with EncryptionKey..."
             $mySecret = .\Encrypt.ps1 -Value "${{ secrets.MY_SECRET }}" -EncryptionKey $encryptionKey
 
-            .\CreateOrUpdateAppSettings.ps1 -FilePath "App.Staging.config" -BasePath "${{ github.workspace }}\src\DoCoffee.App" -Key "MySecret" -Value $mySecret -XmlDocumentTransform $true
+            Write-Host "Updating AppSettings with encrypted secret..."
+            .\UpdateAppSettings.ps1 -FilePath $appConfigPath -Key "MySecret" -Value $mySecret
 
-            .\CreateOrUpdateResx.ps1 -FilePath "${{ github.workspace }}\src\DoCoffee.App\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
+            Write-Host "Updating resx with EncryptionKey..."
+            .\UpdateResx.ps1 -FilePath "${{ env.APPLICATION_DIRECTORY }}\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
