@@ -13,7 +13,7 @@ namespace DoCoffee.App.Services
         public EncrpytionService(string encryptionKey)
         {
             _encryptionKey = encryptionKey ?? throw new ArgumentNullException(nameof(encryptionKey));
-            _encryptionKeyInBytes = Encoding.UTF8.GetBytes(encryptionKey.Substring(0, 8));
+            _encryptionKeyInBytes = Encoding.UTF8.GetBytes(encryptionKey);
         }
         public string Decrypt(string value)
         {
