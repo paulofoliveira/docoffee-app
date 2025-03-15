@@ -1,10 +1,8 @@
-name: 'Deploy DoCoffee (Staging)'
+name: 'Deploy DoCoffee App in Staging'
 
 on:
   milestone:
     types: [closed]
-    paths:
-      - 'src/DoCoffee.App/**'
 
   workflow_dispatch: # Allow you to run this workflow manually from the Action tab
   
