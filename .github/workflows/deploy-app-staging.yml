@@ -22,7 +22,7 @@ jobs:
       milestone_is_valid: ${{ steps.extract-version.outputs.is_valid }}
     
     steps:
-      - name: Extract version from milestone
+      - name: Extract Version from Milestone
         id: extract-version
         shell: bash
         run: |
@@ -54,24 +54,27 @@ jobs:
       - name: Compare Versions
         id: compare
         run: |
-          Invoke-WebRequest "https://raw.githubusercontent.com/paulofoliveira/docoffee-app/refs/heads/main/build/GetApplicationInfo.ps1" -OutFile "GetApplicationInfo.ps1"
+          Invoke-WebRequest "https://raw.githubusercontent.com/paulofoliveira/docoffee-app/refs/heads/main/build/GetApplicationInfo.ps1" -OutFile "GetApplicationInfo.ps1"          
           
-          $milestoneAppVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
           $currentAppVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
-          $nextAppVersion = "$($currentAppVersion.Version.Major).$($currentAppVersion.Version.Minor).$($currentAppVersion.Version.Patch).$($currentAppVersion.Version.Revision + 1)"
                   
-          if ($nextAppVersion -eq $milestoneAppVersion) {
+          if ($currentAppVersion.Version.NextVersion -eq "${{ needs.check-milestone.outputs.milestone_version }}") {
             
-            Write-Host "Match version was detected between milestone and next version: $nextAppVersion"
-            echo "version=$nextAppVersion" >> $env:GITHUB_ENV
-            echo "version=$nextAppVersion" >> $env:GITHUB_OUTPUT
+            Write-Host "Match version detected: $currentAppVersion.Version.NextVersion"
+            
+            echo "version=$currentAppVersion.Version.NextVersion" >> $env:GITHUB_ENV
+            echo "version=$currentAppVersion.Version.NextVersion" >> $env:GITHUB_OUTPUT
             echo "is_valid=true" >> $env:GITHUB_ENV
             echo "is_valid=true" >> $env:GITHUB_OUTPUT
+            
           }
           else {
-            Write-Host "Invalid comparison between milestone version and next. Skipping..."
+          
+            Write-Host "Invalid comparison between milestone version and next application version. Skipping..."
+            
             echo "is_valid=false" >> $env:GITHUB_ENV
-            echo "is_valid=false" >> $env:GITHUB_OUTPUT           
+            echo "is_valid=false" >> $env:GITHUB_OUTPUT 
+            
           }
     
   build-and-deploy:
