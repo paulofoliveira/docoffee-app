@@ -8,7 +8,7 @@ namespace DoCoffee.App
     /// </summary>
     public partial class App : Application
     {
-        private const string EncryptionKey = "c#H<R$oN&W7L13+";
+        private const string EncryptionKey = "c#H<R$oN";
         public static EncrpytionService EncryptionService = new EncrpytionService(EncryptionKey);
     }
 }
