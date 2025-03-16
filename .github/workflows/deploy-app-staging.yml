@@ -1,18 +1,15 @@
-name: 'Deploy DoCoffee (Staging)'
+name: 'Deploy DoCoffee App in Staging'
 
 on:
-  push:
-    branches: [ "staging" ]
-    paths:
-      - 'src/DoCoffee.App/**'
+  milestone:
+    types: [closed]
 
   workflow_dispatch: # Allow you to run this workflow manually from the Action tab
   
 env:
   BUILD_CONFIGURATION: Staging
   BUILD_PLATFORM: AnyCPU
-  CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj
-  APPLICATION_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App  
+  CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
   OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
   BUILD_DIRECTORY: ${{ github.workspace }}\build
       
@@ -26,25 +23,9 @@ jobs:
     - name: "Checkout Code"
       uses: actions/checkout@v4
 
-    - name: "Prepare App.Staging.config"
-      run: |            
-            $appConfigPath = "${{ env.APPLICATION_DIRECTORY }}\App.Staging.config"
-
-            Set-Location ${{ env.BUILD_DIRECTORY }}
-
-            Write-Host "Generating EncryptionKey..."
-            $encryptionKey = .\GenerateEncryptionKey.ps1
-            
-            Write-Host "Encrypting secrests with EncryptionKey..."
-            $mySecret = .\Encrypt.ps1 -Value "${{ secrets.MY_SECRET }}" -EncryptionKey $encryptionKey
-            $apiKey = .\Encrypt.ps1 -Value "${{ secrets.STAGING_APIKEY }}" -EncryptionKey $encryptionKey
-
-            Write-Host "Updating AppSettings..."
-            .\UpdateAppSettings.ps1 -FilePath $appConfigPath -Key "MySecret" -Value $mySecret
-            .\UpdateAppSettings.ps1 -FilePath $appConfigPath -Key "ApiKey" -Value $apiKey
-
-            Write-Host "Updating resx with EncryptionKey..."
-            .\UpdateResx.ps1 -FilePath "${{ env.APPLICATION_DIRECTORY }}\Properties\Resources.resx" -Key "EncryptionKey" -Value $encryptionKey
+    - name: "Update AppSettings"
+      run: |              
+            & "${{ env.BUILD_DIRECTORY }}\CreateOrUpdateAppSettings.ps1" -FilePath "App.config" -BasePath "${{ github.workspace }}\src\DoCoffee.App\" -Key "MySecret" -Value ${{ secrets.MY_SECRET }}
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
@@ -57,13 +38,11 @@ jobs:
       
     - name: "Increment Revision"     
       run: |
+            $actual = & "${{ env.BUILD_DIRECTORY }}\GetApplicationInfo.ps1" -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+            $next = "$($actual.Version.Major).$($actual.Version.Minor).$($actual.Version.Patch).$($actual.Version.Revision + 1)"
+            Write-Host "Identificada nova versão $next a partir do manifesto atual do aplicativo..."
 
-            Set-Location ${{ env.BUILD_DIRECTORY }}
-            $actualVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
-            $nextVersion = "$($actualVersion.Version.Major).$($actualVersion.Version.Minor).$($actualVersion.Version.Patch).$($actualVersion.Version.Revision + 1)"
-            Write-Host "Identificada nova versão $nextVersion a partir do manifesto atual do aplicativo..."
-
-            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV     
+            echo "NEXT_VERSION=$next" >> $env:GITHUB_ENV     
 
     - name: "Publish"
       run: |
@@ -77,7 +56,7 @@ jobs:
       run: |        
         winscp.com /command "open ftp://${{ secrets.FTP_USER }}`:${{ secrets.FTP_PASSWD }}@${{ secrets.FTP_HOSTNAME }}`:${{ secrets.FTP_PORT }}" "option batch on" "option confirm off" "put ${{ env.OUTPUT_DIRECTORY }}\* /docoffee/" "exit"
 
-    - name: "Notify Team in Google Chat"
+    - name: "Notify Team on Google Chat"
       run: |
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
