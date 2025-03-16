@@ -14,8 +14,37 @@ env:
   BUILD_DIRECTORY: ${{ github.workspace }}\build
       
 jobs:
-
-  build-and-publish:
+  
+  check-milestone:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract-version.outputs.version }}
+      is_valid: ${{ steps.extract-version.outputs.is_valid }}
+    
+    steps:
+      - name: Extract version from milestone
+        id: extract-version
+        run: |
+            TITLE = "${{ github.event.milestone.title }}"
+            echo "Milestone title: $TITLE"
+            
+            if [[ "$TITLE" =~ ^Cliente\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              VERSION="${BASH_REMATCH[1]}"
+              echo "Valid format detected: $VERSION"
+              echo "version=$VERSION" >> $GITHUB_ENV
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "is_valid=true" >> $GITHUB_ENV
+              echo "is_valid=true" >> $GITHUB_OUTPUT
+            else
+              echo "Invalid milestone format. Skipping..."
+              echo "is_valid=false" >> $GITHUB_ENV
+              echo "is_valid=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi    
+    
+  build-and-deploy:
+    needs: check-milestone
+    if: needs.check-milestone.outputs.is_valid == 'true'
     runs-on: windows-latest 
     
     steps:
