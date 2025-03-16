@@ -115,5 +115,5 @@ jobs:
       run: |
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
-        $body = @{ "text" = "Publicada versão *${{ env.NEXT_VERSION }}* do aplicativo *DoCoffee* no ambiente de $environmentName." } | ConvertTo-Json
+        $body = @{ "text" = "Publicada versão *${{ needs.compare-versions.outputs.compare_version }}* do aplicativo *DoCoffee* no ambiente de $environmentName." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
