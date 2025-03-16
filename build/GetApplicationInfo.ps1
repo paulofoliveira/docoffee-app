@@ -75,13 +75,14 @@ if ($descriptionNode -and $descriptionNode.Attributes) {
 						Minor = $minor
 						Patch = $patch
 						Revision = $revision
+						NextVersion = "$($major).$($minor).$($patch).$($revision + 1)"
 					}	
 		
 					return @{
 						MinimumRequiredVersion = $minimumVersionAttr.Value
 						ProductName = $productNameAttr.Value
 						PublisherName = $publisherNameAttr.Value
-						Version = $version
+						Version = $version						
 					}
 				}
 			}
