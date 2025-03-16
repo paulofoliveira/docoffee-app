@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using System.Windows;
+﻿using System.Windows;
 
 namespace DoCoffee.App
 {
@@ -12,12 +11,8 @@ namespace DoCoffee.App
         {
             InitializeComponent();
 
-            ApiKeyLabel.Content = $"ApiKey: {ConfigurationManager.AppSettings["ApiKey"]}";
-
-            var encryptedSecret = ConfigurationManager.AppSettings["MySecret"];
-            var decryptedSecret = App.EncryptionService.Decrypt(encryptedSecret);
-
-            DecryptedSecretLabel.Content = $"MySecret: {decryptedSecret}";
+            ApiKeyLabel.Content = $"ApiKey: {ConfigurationManagerHelper.AppSettings.Get("ApiKey")}";
+            DecryptedSecretLabel.Content = $"MySecret: {ConfigurationManagerHelper.AppSettings.Get("MySecret")}";
         }
     }
 }
