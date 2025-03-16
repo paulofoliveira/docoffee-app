@@ -47,7 +47,7 @@ jobs:
     if: needs.check-milestone.outputs.milestone_is_valid == 'true'
     runs-on: windows-latest
     outputs:
-      compare_application_version: ${{ steps.compare.outputs.application_version }}
+      compare_application_version: ${{ steps.compare.outputs.version }}
       compare_is_valid: ${{ steps.compare.outputs.is_valid }}
     
     steps:
@@ -61,8 +61,8 @@ jobs:
           if ($nextAppVersion -eq $milestoneAppVersion) {
             
             Write-Host "Valid versions was detected between milestone and current application."
-            echo "application_version=$nextAppVersion" >> $GITHUB_ENV
-            echo "application_version=$nextAppVersion" >> $GITHUB_OUTPUT
+            echo "version=$nextAppVersion" >> $GITHUB_ENV
+            echo "version=$nextAppVersion" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_ENV
             echo "is_valid=true" >> $GITHUB_OUTPUT
           }
