@@ -1,6 +1,5 @@
 ﻿using DoCoffee.App.Services;
 using System.Windows;
-using ApplicationResources = DoCoffee.App.Properties.Resources;
 
 namespace DoCoffee.App
 {
@@ -9,6 +8,7 @@ namespace DoCoffee.App
     /// </summary>
     public partial class App : Application
     {
-        public static EncrpytionService EncryptionService = new EncrpytionService(ApplicationResources.EncryptionKey);
+        private const string EncryptionKey = "c#H<R$oN&W7L13+";
+        public static EncrpytionService EncryptionService = new EncrpytionService(EncryptionKey);
     }
 }
