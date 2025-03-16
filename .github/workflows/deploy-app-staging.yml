@@ -28,7 +28,7 @@ jobs:
             TITLE = "${{ github.event.milestone.title }}"
             echo "Milestone title: $TITLE"
             
-            if [[ "$TITLE" =~ ^Cliente\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            if [[ "$TITLE" =~ ^Customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
               VERSION="${BASH_REMATCH[1]}"
               echo "Valid format detected: $VERSION"
               echo "version=$VERSION" >> $GITHUB_ENV
