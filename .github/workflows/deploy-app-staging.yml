@@ -47,7 +47,7 @@ jobs:
     if: needs.check-milestone.outputs.milestone_is_valid == 'true'
     runs-on: windows-latest
     outputs:
-      compare_application_version: ${{ steps.compare.outputs.version }}
+      compare_version: ${{ steps.compare.outputs.version }}
       compare_is_valid: ${{ steps.compare.outputs.is_valid }}
     
     steps:
@@ -69,7 +69,9 @@ jobs:
             echo "is_valid=true" >> $GITHUB_OUTPUT
           }
           else {
-            Write-Host "Invalid comparison between milestone version and next. Skipping..." 
+            Write-Host "Invalid comparison between milestone version and next. Skipping..."
+            echo "is_valid=false" >> $GITHUB_ENV
+            echo "is_valid=false" >> $GITHUB_OUTPUT            
           }
     
   build-and-deploy:
@@ -98,7 +100,7 @@ jobs:
 
     - name: "Publish"
       run: |
-        $nextVersion = "${{ needs.compare-versions.outputs.application_version }}"
+        $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
         msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion=$nextVersion /p:MinimumRequiredVersion=$nextVersion /p:VersionAssembly=$nextVersion
     
     - name: "Setup WinSCP"
