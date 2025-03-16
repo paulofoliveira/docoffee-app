@@ -57,8 +57,7 @@ jobs:
           $milestoneAppVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
           $currentAppVersion = & "${{ env.BUILD_DIRECTORY }}\GetApplicationInfo.ps1" -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
           $nextAppVersion = "$($currentAppVersion.Version.Major).$($currentAppVersion.Version.Minor).$($currentAppVersion.Version.Patch).$($currentAppVersion.Version.Revision + 1)"
-          Write-Host "Detected $nextAppVersion version from manifest URL."
-          
+                  
           if ($nextAppVersion -eq $milestoneAppVersion) {
             
             Write-Host "Valid versions was detected between milestone and current application."
