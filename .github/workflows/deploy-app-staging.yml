@@ -40,7 +40,6 @@ jobs:
             echo "Invalid milestone format. Skipping..."
             echo "is_valid=false" >> $GITHUB_ENV
             echo "is_valid=false" >> $GITHUB_OUTPUT
-            exit 1
           fi
           
   build-and-deploy:
