@@ -24,6 +24,7 @@ jobs:
     steps:
       - name: Extract version from milestone
         id: extract-version
+        shell: bash
         run: |
             TITLE = "${{ github.event.milestone.title }}"
             echo "Milestone title: $TITLE"
