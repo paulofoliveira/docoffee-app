@@ -29,7 +29,7 @@ jobs:
           TITLE="${{ github.event.milestone.title }}"
           echo "Milestone title: $TITLE"
           
-          if [[ "$TITLE" =~ ^Customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+          if [[ "$TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
             echo "Valid format detected: $VERSION"
             echo "version=$VERSION" >> $GITHUB_ENV
@@ -84,7 +84,7 @@ jobs:
     
     steps:
 
-    - name: "Checkout Code"
+    - name: "Checkout"
       uses: actions/checkout@v4
 
     - name: "Update AppSettings"
@@ -121,3 +121,28 @@ jobs:
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
         $body = @{ "text" = "Publicada versão *${{ needs.compare-versions.outputs.compare_version }}* do aplicativo *DoCoffee* no ambiente de $environmentName." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
+        
+  create-pr:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: Create PR from main to prod
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          
+          PR_TITLE="chore(deploy): Release ${{ needs.compare-versions.outputs.compare_version }}"
+          PR_BODY="Automated PR to merge main into prod after successful deployment."
+          
+          # Verifica se já existe uma PR aberta
+          EXISTING_PR=$(gh pr list --base prod --head main --json number --jq '.[].number')
+          
+          if [ -z "$EXISTING_PR" ]; then
+            echo "Creating new PR..."
+            gh pr create --base prod --head main --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira"
+          else
+            echo "PR from main to prod already exists (#$EXISTING_PR). Skipping creation."
+          fi
