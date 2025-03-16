@@ -25,7 +25,7 @@ jobs:
 
     - name: "Update AppSettings"
       run: |              
-            & "${{ env.BUILD_DIRECTORY }}\CreateOrUpdateAppSettings.ps1" -FilePath "App.config" -BasePath "${{ github.workspace }}\src\DoCoffee.App\" -Key "MySecret" -Value ${{ secrets.MY_SECRET }}
+            & "${{ env.BUILD_DIRECTORY }}\UpdateAppSettings.ps1" -FilePath "App.config" -BasePath "${{ github.workspace }}\src\DoCoffee.App\" -Key "MySecret" -Value ${{ secrets.MY_SECRET }}
                     
     - name: 'Setup MSBuild'
       uses: microsoft/setup-msbuild@v2
