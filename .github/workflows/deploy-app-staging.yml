@@ -62,7 +62,7 @@ jobs:
                   
           if ($nextAppVersion -eq $milestoneAppVersion) {
             
-            Write-Host "Valid versions was detected between milestone and current application."
+            Write-Host "Match version was detected between milestone and next version: $nextAppVersion"
             echo "version=$nextAppVersion" >> $env:GITHUB_ENV
             echo "version=$nextAppVersion" >> $env:GITHUB_OUTPUT
             echo "is_valid=true" >> $env:GITHUB_ENV
