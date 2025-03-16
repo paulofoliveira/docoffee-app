@@ -18,8 +18,8 @@ jobs:
   check-milestone:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.extract-version.outputs.version }}
-      is_valid: ${{ steps.extract-version.outputs.is_valid }}
+      milestone_version: ${{ steps.extract-version.outputs.version }}
+      milestone_is_valid: ${{ steps.extract-version.outputs.is_valid }}
     
     steps:
       - name: Extract version from milestone
@@ -44,7 +44,7 @@ jobs:
           
   build-and-deploy:
     needs: check-milestone
-    if: needs.check-milestone.outputs.is_valid == 'true'
+    if: needs.check-milestone.outputs.milestone_is_valid == 'true'
     runs-on: windows-latest 
     
     steps:
