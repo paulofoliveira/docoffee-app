@@ -42,9 +42,38 @@ jobs:
             echo "is_valid=false" >> $GITHUB_OUTPUT
           fi
           
-  build-and-deploy:
+  compare-versions:
     needs: check-milestone
     if: needs.check-milestone.outputs.milestone_is_valid == 'true'
+    runs-on: windows-latest
+    outputs:
+      compare_application_version: ${{ steps.compare.outputs.application_version }}
+      compare_is_valid: ${{ steps.compare.outputs.is_valid }}
+    
+    steps:
+      - name: Compare Versions
+        id: compare
+        run: |
+          $milestoneAppVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
+          $currentAppVersion = & "${{ env.BUILD_DIRECTORY }}\GetApplicationInfo.ps1" -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+          $nextAppVersion = "$($currentAppVersion.Version.Major).$($currentAppVersion.Version.Minor).$($currentAppVersion.Version.Patch).$($currentAppVersion.Version.Revision + 1)"
+          Write-Host "Detected $nextAppVersion version from manifest URL."
+          
+          if ($nextAppVersion -eq $milestoneAppVersion) {
+            
+            Write-Host "Valid versions was detected between milestone and current application."
+            echo "application_version=$nextAppVersion" >> $GITHUB_ENV
+            echo "application_version=$nextAppVersion" >> $GITHUB_OUTPUT
+            echo "is_valid=true" >> $GITHUB_ENV
+            echo "is_valid=true" >> $GITHUB_OUTPUT
+          }
+          else {
+            Write-Host "Invalid comparison between milestone version and next. Skipping..." 
+          }
+    
+  build-and-deploy:
+    needs: compare-versions
+    if: needs.compare-versions.outputs.compare_is_valid == 'true'
     runs-on: windows-latest 
     
     steps:
@@ -64,19 +93,12 @@ jobs:
       uses: nuget/setup-nuget@v2
 
     - name: 'Nuget Restore Packages'
-      run: nuget restore ${{ env.CSPROJ_PATH }} -PackagesDirectory "src/packages"
-      
-    - name: "Increment Revision"     
-      run: |
-            $actual = & "${{ env.BUILD_DIRECTORY }}\GetApplicationInfo.ps1" -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
-            $next = "$($actual.Version.Major).$($actual.Version.Minor).$($actual.Version.Patch).$($actual.Version.Revision + 1)"
-            Write-Host "Identificada nova versão $next a partir do manifesto atual do aplicativo..."
-
-            echo "NEXT_VERSION=$next" >> $env:GITHUB_ENV     
+      run: nuget restore ${{ env.CSPROJ_PATH }} -PackagesDirectory "src/packages"  
 
     - name: "Publish"
       run: |
-        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion="${{ env.NEXT_VERSION }}" /p:MinimumRequiredVersion="${{ env.NEXT_VERSION }}" /p:VersionAssembly="${{ env.NEXT_VERSION }}"
+        $nextVersion = "${{ needs.compare-versions.outputs.application_version }}"
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion=$nextVersion /p:MinimumRequiredVersion=$nextVersion /p:VersionAssembly=$nextVersion
     
     - name: "Setup WinSCP"
       run: |
