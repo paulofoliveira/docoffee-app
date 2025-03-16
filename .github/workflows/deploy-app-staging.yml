@@ -54,8 +54,10 @@ jobs:
       - name: Compare Versions
         id: compare
         run: |
+          Invoke-WebRequest "https://raw.githubusercontent.com/paulofoliveira/docoffee-app/refs/heads/main/build/GetApplicationInfo.ps1" -OutFile "GetApplicationInfo.ps1"
+          
           $milestoneAppVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
-          $currentAppVersion = & "${{ env.BUILD_DIRECTORY }}\GetApplicationInfo.ps1" -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+          $currentAppVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
           $nextAppVersion = "$($currentAppVersion.Version.Major).$($currentAppVersion.Version.Minor).$($currentAppVersion.Version.Patch).$($currentAppVersion.Version.Revision + 1)"
                   
           if ($nextAppVersion -eq $milestoneAppVersion) {
