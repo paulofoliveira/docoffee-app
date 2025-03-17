@@ -176,7 +176,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           
-          PR_TITLE="chore(deploy): Release ${BRANCH_NAME#release/}"
+          PR_TITLE="chore(deploy): Release ${{ env.MILESTONE_PREFIX_NAME }}-v${{ needs.build-and-deploy.outputs.deployed_version }}"
           PR_BODY="Automated PR to merge main into prod after successful deployment."
           
           # Check if already PR is open
