@@ -12,6 +12,7 @@ env:
   CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
   OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
   BUILD_DIRECTORY: ${{ github.workspace }}\build
+  MILESTONE_PREFIX_NAME: docoffee
       
 jobs:
   
@@ -19,20 +20,35 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       milestone_version: ${{ steps.extract-version.outputs.version }}
+      milestone_id: ${{ steps.extract-version.outputs.id }}
+      milestone_title: ${{ steps.extract-version.outputs.title }}
+      milestone_description: ${{ steps.extract-version.outputs.description }}
+      milestone_due_on: ${{ steps.extract-version.outputs.due_on }}
       milestone_is_valid: ${{ steps.extract-version.outputs.is_valid }}
     
     steps:
       - name: Extract Version from Milestone
         id: extract-version
         shell: bash
-        run: |
-          TITLE="${{ github.event.milestone.title }}"
-          echo "Milestone title: $TITLE"
+        run: |        
+          MILESTONE_ID="${{ github.event.milestone.id }}"
+          MILESTONE_TITLE="${{ github.event.milestone.title }}"
+          MILESTONE_DESCRIPTION="${{ github.event.milestone.description }}"
+          MILESTONE_DUE_ON="${{ github.event.milestone.due_on }}"
           
-          if [[ "$TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            VERSION="${BASH_REMATCH[1]}"
-            echo "Valid format detected: $VERSION"
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Milestone ID: $MILESTONE_ID"
+          echo "Milestone Title: $MILESTONE_TITLE"
+          echo "Milestone Description: $MILESTONE_DESCRIPTION"
+          echo "Milestone Due On: $MILESTONE_DUE_ON"
+          
+          if [[ "$MILESTONE_TITLE" =~ ^${{ env.MILESTONE_PREFIX_NAME }}\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            MILESTONE_VERSION="${BASH_REMATCH[1]}"
+            echo "Valid format detected: $MILESTONE_VERSION"
+            echo "version=$MILESTONE_VERSION" >> $GITHUB_OUTPUT
+            echo "id=$MILESTONE_ID" >> $GITHUB_OUTPUT
+            echo "title=$MILESTONE_TITLE" >> $GITHUB_OUTPUT
+            echo "description=$MILESTONE_DESCRIPTION" >> $GITHUB_OUTPUT
+            echo "due_on=$MILESTONE_DUE_ON" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
           else
             echo "Invalid milestone format. Skipping..."
@@ -67,15 +83,13 @@ jobs:
           }
           else {
           
-            Write-Host "Invalid comparison between milestone version ($milestoneVersion) and next application version ($nextVersion). Skipping..."
-      
-            
+            Write-Host "Invalid comparison between milestone version ($milestoneVersion) and next application version ($nextVersion). Skipping..."           
             echo "is_valid=false" >> $env:GITHUB_OUTPUT 
             
           }
     
   build-and-deploy:
-    needs: compare-versions
+    needs: [check-milestone, compare-versions]
     if: needs.compare-versions.outputs.compare_is_valid == 'true'
     runs-on: windows-latest 
     outputs:
@@ -117,10 +131,11 @@ jobs:
     - name: "Notify Team on Google Chat"
       id: notify-chat
       run: |
+        $milestoneUrl = "https://github.com/paulofoliveira/docoffee-app/milestone/${{ needs.check-milestone.outputs.milestone_id }}?closed=1"
         $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
-        $body = @{ "text" = "Nova versão *$nextVersion* do *DoCoffee* em $environmentName." } | ConvertTo-Json
+        $body = @{ "text" = "Nova versão *$nextVersion* do *DoCoffee* em $environmentName. Confira mais em $($milestoneUrl)." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
         
         echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
@@ -132,20 +147,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: prod  # Faz checkout da branch prod
+          ref: main
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch latest main
-        run: git fetch origin main
-
-      - name: Merge main into prod (Resolve conflicts automatically)
+      - name: Create release branch
         run: |
-          git merge -X theirs origin/main -m "Merging main into prod (auto-resolve conflicts)" --allow-unrelated-histories 
-          git push origin prod || echo "No new changes to push"
+          BRANCH_NAME="release/${{ env.MILESTONE_PREFIX_NAME }}-v${{ needs.build-and-deploy.outputs.deployed_version }}"
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
 
       - name: Authenticate GitHub CLI
         env:
@@ -158,15 +171,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           
-          PR_TITLE="chore(deploy): Release ${{ needs.build-and-deploy.outputs.deployed_version }}"
+          PR_TITLE="chore(deploy): Release ${BRANCH_NAME#release/}"
           PR_BODY="Automated PR to merge main into prod after successful deployment."
           
-          # Verifica se já existe uma PR aberta
-          EXISTING_PR=$(gh pr list --base prod --head main --json number --jq '.[].number')
+          # Check if already PR is open
+          EXISTING_PR=$(gh pr list --base prod --head $BRANCH_NAME --json number --jq '.[].number')
           
           if [ -z "$EXISTING_PR" ]; then
             echo "Creating new PR..."
-            gh pr create --base prod --head main --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
+            gh pr create --base prod --head $BRANCH_NAME --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
           else
-            echo "PR from main to prod already exists (#$EXISTING_PR). Skipping creation."
+            echo "PR from $BRANCH_NAME  to prod already exists (#$EXISTING_PR). Skipping creation."
           fi
