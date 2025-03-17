@@ -182,7 +182,7 @@ jobs:
           # Check if already PR is open
           EXISTING_PR=$(gh pr list --base prod --head "$BRANCH_NAME" --json number --jq '.[].number')
           
-          if [ -z "$EXISTING_PR" ]; then
+          if [ -z "$EXISTING_PR" ] then
             echo "Creating new PR..."
             gh pr create --base prod --head $BRANCH_NAME --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
           else
