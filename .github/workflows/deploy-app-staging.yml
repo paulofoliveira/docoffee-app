@@ -144,7 +144,7 @@ jobs:
 
       - name: Merge main into prod
         run: |
-          git merge --no-ff origin/main -m "Syncing prod with main before creating PR"
+          git merge --no-ff origin/main -m "Syncing prod with main before creating PR" --allow-unrelated-histories
           git push origin prod || echo "No new changes to push"
 
       - name: Authenticate GitHub CLI
