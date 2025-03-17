@@ -34,11 +34,9 @@ jobs:
             echo "Valid format detected: $VERSION"
             echo "version=$VERSION" >> $GITHUB_ENV
             echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "is_valid=true" >> $GITHUB_ENV
             echo "is_valid=true" >> $GITHUB_OUTPUT
           else
             echo "Invalid milestone format. Skipping..."
-            echo "is_valid=false" >> $GITHUB_ENV
             echo "is_valid=false" >> $GITHUB_OUTPUT
           fi
           
@@ -63,9 +61,9 @@ jobs:
             
             Write-Host "Match version detected: $nextVersion"
             
-            echo "version=$nextVersion" >> $env:GITHUB_ENV
+            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV
+            
             echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
-            echo "is_valid=true" >> $env:GITHUB_ENV
             echo "is_valid=true" >> $env:GITHUB_OUTPUT
             
           }
@@ -73,7 +71,6 @@ jobs:
           
             Write-Host "Invalid comparison between milestone version and next application version. Skipping..."
             
-            echo "is_valid=false" >> $env:GITHUB_ENV
             echo "is_valid=false" >> $env:GITHUB_OUTPUT 
             
           }
@@ -105,8 +102,7 @@ jobs:
 
     - name: "Publish"
       run: |
-        $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
-        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion=$nextVersion /p:MinimumRequiredVersion=$nextVersion /p:VersionAssembly=$nextVersion
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion=${{ env.NEXT_VERSION }} /p:MinimumRequiredVersion=${{ env.NEXT_VERSION }} /p:VersionAssembly=${{ env.NEXT_VERSION }}
     
     - name: "Setup WinSCP"
       run: |
@@ -120,7 +116,7 @@ jobs:
       run: |
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
-        $body = @{ "text" = "Publicada versão *${{ needs.compare-versions.outputs.compare_version }}* do aplicativo *DoCoffee* no ambiente de $environmentName." } | ConvertTo-Json
+        $body = @{ "text" = "Nova versão *${{ env.NEXT_VERSION }}* do *DoCoffee* em $environmentName." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
         
   create-pr:
@@ -135,7 +131,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           
-          PR_TITLE="chore(deploy): Release ${{ needs.compare-versions.outputs.compare_version }}"
+          PR_TITLE="chore(deploy): Release ${{ env.NEXT_VERSION }}"
           PR_BODY="Automated PR to merge main into prod after successful deployment."
           
           # Verifica se já existe uma PR aberta
