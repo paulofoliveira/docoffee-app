@@ -54,8 +54,7 @@ jobs:
           Invoke-WebRequest "https://raw.githubusercontent.com/paulofoliveira/docoffee-app/refs/heads/main/build/GetApplicationInfo.ps1" -OutFile "GetApplicationInfo.ps1"          
           
           $currentAppVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
-          #$nextVersion = $currentAppVersion.Version.NextVersion
-          $nextVersion = "1.0.0.37"
+          $nextVersion = $currentAppVersion.Version.NextVersion
           $milestoneVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
                   
           if ($nextVersion -eq $milestoneVersion) {
