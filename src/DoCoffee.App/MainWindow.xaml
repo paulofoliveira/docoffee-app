@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DoCoffee.App"
         mc:Ignorable="d"
-        Title="Do Coffee Application" Height="400" Width="600"    
+        Title="Do Coffee Application" Height="400" Width="600"
         Background="DeepSkyBlue"
         WindowStartupLocation="CenterScreen">
     <Grid>
