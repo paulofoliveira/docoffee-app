@@ -19,20 +19,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       milestone_version: ${{ steps.extract-version.outputs.version }}
+      milestone_id: ${{ steps.extract-version.outputs.id }}
+      milestone_title: ${{ steps.extract-version.outputs.title }}
+      milestone_description: ${{ steps.extract-version.outputs.description }}
+      milestone_due_on: ${{ steps.extract-version.outputs.due_on }}
       milestone_is_valid: ${{ steps.extract-version.outputs.is_valid }}
     
     steps:
       - name: Extract Version from Milestone
         id: extract-version
         shell: bash
-        run: |
-          TITLE="${{ github.event.milestone.title }}"
-          echo "Milestone title: $TITLE"
+        run: |        
+          MILESTONE_ID="${{ github.event.milestone.id }}"
+          MILESTONE_TITLE="${{ github.event.milestone.title }}"
+          MILESTONE_DESCRIPTION="${{ github.event.milestone.description }}"
+          MILESTONE_DUE_ON="${{ github.event.milestone.due_on }}"
           
-          if [[ "$TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            VERSION="${BASH_REMATCH[1]}"
-            echo "Valid format detected: $VERSION"
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Milestone ID: $MILESTONE_ID"
+          echo "Milestone Title: $MILESTONE_TITLE"
+          echo "Milestone Description: $MILESTONE_DESCRIPTION"
+          echo "Milestone Due On: $MILESTONE_DUE_ON"
+          
+          if [[ "$MILESTONE_TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            MILESTONE_VERSION="${BASH_REMATCH[1]}"
+            echo "Valid format detected: $MILESTONE_VERSION"
+            echo "version=$MILESTONE_VERSION" >> $GITHUB_OUTPUT
+            echo "title=$MILESTONE_TITLE" >> $GITHUB_OUTPUT
+            echo "description=$MILESTONE_DESCRIPTION" >> $GITHUB_OUTPUT
+            echo "due_on=$MILESTONE_DUE_ON" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
           else
             echo "Invalid milestone format. Skipping..."
@@ -75,7 +89,7 @@ jobs:
           }
     
   build-and-deploy:
-    needs: compare-versions
+    needs: [check-milestone, compare-versions]
     if: needs.compare-versions.outputs.compare_is_valid == 'true'
     runs-on: windows-latest 
     outputs:
@@ -117,10 +131,11 @@ jobs:
     - name: "Notify Team on Google Chat"
       id: notify-chat
       run: |
+        $milestoneUrl = "https://github.com/paulofoliveira/docoffee-app/milestone/${{ needs.check-milestone.outputs.milestone_id }}?closed=1"
         $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
-        $body = @{ "text" = "Nova versão *$nextVersion* do *DoCoffee* em $environmentName." } | ConvertTo-Json
+        $body = @{ "text" = "Nova versão *$nextVersion* do *DoCoffee* em $environmentName. Confira mais em $($milestoneUrl)." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
         
         echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
