@@ -60,8 +60,6 @@ jobs:
             
             Write-Host "Match version detected: $nextVersion"
             
-            echo "NEXT_VERSION=$nextVersion" >> $env:GITHUB_ENV
-            
             echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
             echo "is_valid=true" >> $env:GITHUB_OUTPUT
             
@@ -78,6 +76,8 @@ jobs:
     needs: compare-versions
     if: needs.compare-versions.outputs.compare_is_valid == 'true'
     runs-on: windows-latest 
+    outputs:
+      deployed_version: ${{ steps.notify-chat.outputs.version }}
     
     steps:
 
@@ -101,7 +101,8 @@ jobs:
 
     - name: "Publish"
       run: |
-        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion=${{ env.NEXT_VERSION }} /p:MinimumRequiredVersion=${{ env.NEXT_VERSION }} /p:VersionAssembly=${{ env.NEXT_VERSION }}
+        $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
+        msbuild ${{ env.CSPROJ_PATH }} /t:publish /p:Configuration="${{ env.BUILD_CONFIGURATION }}" /p:Platform="${{ env.BUILD_PLATFORM }}" /p:ApplicationVersion=$nextVersion /p:MinimumRequiredVersion=$nextVersion /p:VersionAssembly=$nextVersion
     
     - name: "Setup WinSCP"
       run: |
@@ -112,11 +113,15 @@ jobs:
         winscp.com /command "open ftp://${{ secrets.FTP_USER }}`:${{ secrets.FTP_PASSWD }}@${{ secrets.FTP_HOSTNAME }}`:${{ secrets.FTP_PORT }}" "option batch on" "option confirm off" "put ${{ env.OUTPUT_DIRECTORY }}\* /docoffee/" "exit"
 
     - name: "Notify Team on Google Chat"
+      id: notify-chat
       run: |
+        $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
-        $body = @{ "text" = "Nova versão *${{ env.NEXT_VERSION }}* do *DoCoffee* em $environmentName." } | ConvertTo-Json
+        $body = @{ "text" = "Nova versão *$nextVersion* do *DoCoffee* em $environmentName." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
+        
+        echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
         
   create-pr:
     needs: build-and-deploy
@@ -130,7 +135,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           
-          PR_TITLE="chore(deploy): Release ${{ env.NEXT_VERSION }}"
+          PR_TITLE="chore(deploy): Release ${{ needs.build-and-deploy.outputs.deployed_version }}"
           PR_BODY="Automated PR to merge main into prod after successful deployment."
           
           # Verifica se já existe uma PR aberta
