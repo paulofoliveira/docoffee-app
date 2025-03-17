@@ -180,7 +180,7 @@ jobs:
           PR_BODY="Automated PR to merge main into prod after successful deployment."
           
           # Check if already PR is open
-          EXISTING_PR=$(gh pr list --base prod --head $BRANCH_NAME --json number --jq '.[].number')
+          EXISTING_PR=$(gh pr list --base prod --head "$BRANCH_NAME" --json number --jq '.[].number')
           
           if [ -z "$EXISTING_PR" ]; then
             echo "Creating new PR..."
