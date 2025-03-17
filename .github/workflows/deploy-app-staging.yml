@@ -144,7 +144,7 @@ jobs:
 
       - name: Merge main into prod (Resolve conflicts automatically)
         run: |
-          git merge -X theirs origin/main -m "Merging main into prod (auto-resolve conflicts)"
+          git merge -X theirs origin/main -m "Merging main into prod (auto-resolve conflicts)" --allow-unrelated-histories 
           git push origin prod || echo "No new changes to push"
 
       - name: Authenticate GitHub CLI
