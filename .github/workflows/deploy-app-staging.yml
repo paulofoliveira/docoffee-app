@@ -55,8 +55,9 @@ jobs:
           
           $currentAppVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
           $nextVersion = $currentAppVersion.Version.NextVersion
+          $milestoneVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
                   
-          if ($nextVersion -eq "${{ needs.check-milestone.outputs.milestone_version }}") {
+          if ($nextVersion -eq $milestoneVersion) {
             
             Write-Host "Match version detected: $nextVersion"
             
@@ -66,7 +67,8 @@ jobs:
           }
           else {
           
-            Write-Host "Invalid comparison between milestone version and next application version. Skipping..."
+            Write-Host "Invalid comparison between milestone version ($milestoneVersion) and next application version ($nextVersion). Skipping..."
+      
             
             echo "is_valid=false" >> $env:GITHUB_OUTPUT 
             
