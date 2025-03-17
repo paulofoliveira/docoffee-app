@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:DoCoffee.App"
         mc:Ignorable="d"
         Title="Do Coffee Application" Height="400" Width="600"    
-        Background="Brown"
+        Background="DeepSkyBlue"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
