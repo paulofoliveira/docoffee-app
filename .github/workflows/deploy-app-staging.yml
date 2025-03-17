@@ -57,13 +57,14 @@ jobs:
           Invoke-WebRequest "https://raw.githubusercontent.com/paulofoliveira/docoffee-app/refs/heads/main/build/GetApplicationInfo.ps1" -OutFile "GetApplicationInfo.ps1"          
           
           $currentAppVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+          $nextVersion = $currentAppVersion.Version.NextVersion
                   
-          if ($currentAppVersion.Version.NextVersion -eq "${{ needs.check-milestone.outputs.milestone_version }}") {
+          if ($nextVersion -eq "${{ needs.check-milestone.outputs.milestone_version }}") {
             
-            Write-Host "Match version detected: $currentAppVersion.Version.NextVersion"
+            Write-Host "Match version detected: $nextVersion"
             
-            echo "version=$currentAppVersion.Version.NextVersion" >> $env:GITHUB_ENV
-            echo "version=$currentAppVersion.Version.NextVersion" >> $env:GITHUB_OUTPUT
+            echo "version=$nextVersion" >> $env:GITHUB_ENV
+            echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
             echo "is_valid=true" >> $env:GITHUB_ENV
             echo "is_valid=true" >> $env:GITHUB_OUTPUT
             
