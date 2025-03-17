@@ -142,9 +142,9 @@ jobs:
       - name: Fetch latest main
         run: git fetch origin main
 
-      - name: Merge main into prod
+      - name: Merge main into prod (Resolve conflicts automatically)
         run: |
-          git merge --no-ff origin/main -m "Syncing prod with main before creating PR" --allow-unrelated-histories
+          git merge -X theirs origin/main -m "Merging main into prod (auto-resolve conflicts)"
           git push origin prod || echo "No new changes to push"
 
       - name: Authenticate GitHub CLI
