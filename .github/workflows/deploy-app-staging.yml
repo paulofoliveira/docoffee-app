@@ -129,8 +129,29 @@ jobs:
     needs: build-and-deploy
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: prod  # Faz checkout da branch prod
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch latest main
+        run: git fetch origin main
+
+      - name: Merge main into prod
+        run: |
+          git merge --no-ff origin/main -m "Syncing prod with main before creating PR"
+          git push origin prod || echo "No new changes to push"
+
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh auth status
 
       - name: Create PR from main to prod
         env:
