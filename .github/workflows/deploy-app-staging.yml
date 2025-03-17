@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       milestone_version: ${{ steps.extract-version.outputs.version }}
+      milestone_number: ${{ steps.extract-version.outputs.number }}
       milestone_id: ${{ steps.extract-version.outputs.id }}
       milestone_title: ${{ steps.extract-version.outputs.title }}
       milestone_description: ${{ steps.extract-version.outputs.description }}
@@ -32,11 +33,13 @@ jobs:
         shell: bash
         run: |        
           MILESTONE_ID="${{ github.event.milestone.id }}"
+          MILESTONE_NUMBER="${{ github.event.milestone.number }}"
           MILESTONE_TITLE="${{ github.event.milestone.title }}"
           MILESTONE_DESCRIPTION="${{ github.event.milestone.description }}"
           MILESTONE_DUE_ON="${{ github.event.milestone.due_on }}"
           
           echo "Milestone ID: $MILESTONE_ID"
+          echo "Milestone Number: $MILESTONE_NUMBER"
           echo "Milestone Title: $MILESTONE_TITLE"
           echo "Milestone Description: $MILESTONE_DESCRIPTION"
           echo "Milestone Due On: $MILESTONE_DUE_ON"
@@ -46,6 +49,7 @@ jobs:
             echo "Valid format detected: $MILESTONE_VERSION"
             echo "version=$MILESTONE_VERSION" >> $GITHUB_OUTPUT
             echo "id=$MILESTONE_ID" >> $GITHUB_OUTPUT
+            echo "number=$MILESTONE_NUMBER" >> $GITHUB_OUTPUT
             echo "title=$MILESTONE_TITLE" >> $GITHUB_OUTPUT
             echo "description=$MILESTONE_DESCRIPTION" >> $GITHUB_OUTPUT
             echo "due_on=$MILESTONE_DUE_ON" >> $GITHUB_OUTPUT
@@ -131,7 +135,7 @@ jobs:
     - name: "Notify Team on Google Chat"
       id: notify-chat
       run: |
-        $milestoneUrl = "https://github.com/paulofoliveira/docoffee-app/milestone/${{ needs.check-milestone.outputs.milestone_id }}?closed=1"
+        $milestoneUrl = "https://github.com/paulofoliveira/docoffee-app/milestone/${{ needs.check-milestone.outputs.milestone_number }}?closed=1"
         $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
