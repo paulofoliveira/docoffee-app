@@ -32,7 +32,6 @@ jobs:
           if [[ "$TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
             echo "Valid format detected: $VERSION"
-            echo "version=$VERSION" >> $GITHUB_ENV
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
           else
@@ -139,7 +138,7 @@ jobs:
           
           if [ -z "$EXISTING_PR" ]; then
             echo "Creating new PR..."
-            gh pr create --base prod --head main --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira"
+            gh pr create --base prod --head main --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
           else
             echo "PR from main to prod already exists (#$EXISTING_PR). Skipping creation."
           fi
