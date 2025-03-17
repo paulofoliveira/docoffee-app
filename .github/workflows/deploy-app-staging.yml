@@ -12,6 +12,7 @@ env:
   CSPROJ_PATH: src\DoCoffee.App\DoCoffee.App.csproj  
   OUTPUT_DIRECTORY: ${{ github.workspace }}\src\DoCoffee.App\bin\Staging\app.publish
   BUILD_DIRECTORY: ${{ github.workspace }}\build
+  MILESTONE_PREFIX_NAME: docoffee
       
 jobs:
   
@@ -40,10 +41,11 @@ jobs:
           echo "Milestone Description: $MILESTONE_DESCRIPTION"
           echo "Milestone Due On: $MILESTONE_DUE_ON"
           
-          if [[ "$MILESTONE_TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+          if [[ "$MILESTONE_TITLE" =~ ^${{ env.MILESTONE_PREFIX_NAME }}\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             MILESTONE_VERSION="${BASH_REMATCH[1]}"
             echo "Valid format detected: $MILESTONE_VERSION"
             echo "version=$MILESTONE_VERSION" >> $GITHUB_OUTPUT
+            echo "id=$MILESTONE_ID" >> $GITHUB_OUTPUT
             echo "title=$MILESTONE_TITLE" >> $GITHUB_OUTPUT
             echo "description=$MILESTONE_DESCRIPTION" >> $GITHUB_OUTPUT
             echo "due_on=$MILESTONE_DUE_ON" >> $GITHUB_OUTPUT
@@ -81,9 +83,7 @@ jobs:
           }
           else {
           
-            Write-Host "Invalid comparison between milestone version ($milestoneVersion) and next application version ($nextVersion). Skipping..."
-      
-            
+            Write-Host "Invalid comparison between milestone version ($milestoneVersion) and next application version ($nextVersion). Skipping..."           
             echo "is_valid=false" >> $env:GITHUB_OUTPUT 
             
           }
@@ -156,7 +156,7 @@ jobs:
 
       - name: Create release branch
         run: |
-          BRANCH_NAME="release/docoffee-v${{ needs.build-and-deploy.outputs.deployed_version }}"
+          BRANCH_NAME="release/${{ env.MILESTONE_PREFIX_NAME }}-v${{ needs.build-and-deploy.outputs.deployed_version }}"
           git checkout -b $BRANCH_NAME
           git push origin $BRANCH_NAME
 
