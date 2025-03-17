@@ -29,16 +29,13 @@ jobs:
           TITLE="${{ github.event.milestone.title }}"
           echo "Milestone title: $TITLE"
           
-          if [[ "$TITLE" =~ ^Customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+          if [[ "$TITLE" =~ ^customer\ v([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
             echo "Valid format detected: $VERSION"
-            echo "version=$VERSION" >> $GITHUB_ENV
             echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "is_valid=true" >> $GITHUB_ENV
             echo "is_valid=true" >> $GITHUB_OUTPUT
           else
             echo "Invalid milestone format. Skipping..."
-            echo "is_valid=false" >> $GITHUB_ENV
             echo "is_valid=false" >> $GITHUB_OUTPUT
           fi
           
@@ -57,22 +54,23 @@ jobs:
           Invoke-WebRequest "https://raw.githubusercontent.com/paulofoliveira/docoffee-app/refs/heads/main/build/GetApplicationInfo.ps1" -OutFile "GetApplicationInfo.ps1"          
           
           $currentAppVersion = .\GetApplicationInfo.ps1 -Url "${{ secrets.APP_MANIFEST_STAGING_URL }}"
+          #$nextVersion = $currentAppVersion.Version.NextVersion
+          $nextVersion = "1.0.0.37"
+          $milestoneVersion = "${{ needs.check-milestone.outputs.milestone_version }}"
                   
-          if ($currentAppVersion.Version.NextVersion -eq "${{ needs.check-milestone.outputs.milestone_version }}") {
+          if ($nextVersion -eq $milestoneVersion) {
             
-            Write-Host "Match version detected: $currentAppVersion.Version.NextVersion"
+            Write-Host "Match version detected: $nextVersion"
             
-            echo "version=$currentAppVersion.Version.NextVersion" >> $env:GITHUB_ENV
-            echo "version=$currentAppVersion.Version.NextVersion" >> $env:GITHUB_OUTPUT
-            echo "is_valid=true" >> $env:GITHUB_ENV
+            echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
             echo "is_valid=true" >> $env:GITHUB_OUTPUT
             
           }
           else {
           
-            Write-Host "Invalid comparison between milestone version and next application version. Skipping..."
+            Write-Host "Invalid comparison between milestone version ($milestoneVersion) and next application version ($nextVersion). Skipping..."
+      
             
-            echo "is_valid=false" >> $env:GITHUB_ENV
             echo "is_valid=false" >> $env:GITHUB_OUTPUT 
             
           }
@@ -81,10 +79,12 @@ jobs:
     needs: compare-versions
     if: needs.compare-versions.outputs.compare_is_valid == 'true'
     runs-on: windows-latest 
+    outputs:
+      deployed_version: ${{ steps.notify-chat.outputs.version }}
     
     steps:
 
-    - name: "Checkout Code"
+    - name: "Checkout"
       uses: actions/checkout@v4
 
     - name: "Update AppSettings"
@@ -116,8 +116,37 @@ jobs:
         winscp.com /command "open ftp://${{ secrets.FTP_USER }}`:${{ secrets.FTP_PASSWD }}@${{ secrets.FTP_HOSTNAME }}`:${{ secrets.FTP_PORT }}" "option batch on" "option confirm off" "put ${{ env.OUTPUT_DIRECTORY }}\* /docoffee/" "exit"
 
     - name: "Notify Team on Google Chat"
+      id: notify-chat
       run: |
+        $nextVersion = "${{ needs.compare-versions.outputs.compare_version }}"
         $webhookUrl = "https://chat.googleapis.com/v1/spaces/${{ secrets.GOOGLE_CHAT_SPACE }}/messages?key=${{ secrets.GOOGLE_CHAT_KEY }}&token=${{ secrets.GOOGLE_CHAT_TOKEN }}"        
         $environmentName = @{$true="Produção";$false="Homologação"}["${{ env.BUILD_CONFIGURATION }}" -eq "Release"]
-        $body = @{ "text" = "Publicada versão *${{ needs.compare-versions.outputs.compare_version }}* do aplicativo *DoCoffee* no ambiente de $environmentName." } | ConvertTo-Json
+        $body = @{ "text" = "Nova versão *$nextVersion* do *DoCoffee* em $environmentName." } | ConvertTo-Json
         Invoke-RestMethod -Method POST -Uri $webhookUrl -Body $body -ContentType "application/json"
+        
+        echo "version=$nextVersion" >> $env:GITHUB_OUTPUT
+        
+  create-pr:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: Create PR from main to prod
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          
+          PR_TITLE="chore(deploy): Release ${{ needs.build-and-deploy.outputs.deployed_version }}"
+          PR_BODY="Automated PR to merge main into prod after successful deployment."
+          
+          # Verifica se já existe uma PR aberta
+          EXISTING_PR=$(gh pr list --base prod --head main --json number --jq '.[].number')
+          
+          if [ -z "$EXISTING_PR" ]; then
+            echo "Creating new PR..."
+            gh pr create --base prod --head main --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
+          else
+            echo "PR from main to prod already exists (#$EXISTING_PR). Skipping creation."
+          fi
