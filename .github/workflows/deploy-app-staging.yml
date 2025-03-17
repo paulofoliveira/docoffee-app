@@ -132,20 +132,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: prod  # Faz checkout da branch prod
+          ref: main
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch latest main
-        run: git fetch origin main
-
-      - name: Merge main into prod (Resolve conflicts automatically)
+      - name: Create release branch
         run: |
-          git merge -X theirs origin/main -m "Merging main into prod (auto-resolve conflicts)" --allow-unrelated-histories 
-          git push origin prod || echo "No new changes to push"
+          BRANCH_NAME="release/docoffee-v${{ needs.build-and-deploy.outputs.deployed_version }}"
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
 
       - name: Authenticate GitHub CLI
         env:
@@ -158,15 +156,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           
-          PR_TITLE="chore(deploy): Release ${{ needs.build-and-deploy.outputs.deployed_version }}"
+          PR_TITLE="chore(deploy): Release ${BRANCH_NAME#release/}"
           PR_BODY="Automated PR to merge main into prod after successful deployment."
           
-          # Verifica se já existe uma PR aberta
-          EXISTING_PR=$(gh pr list --base prod --head main --json number --jq '.[].number')
+          # Check if already PR is open
+          EXISTING_PR=$(gh pr list --base prod --head $BRANCH_NAME --json number --jq '.[].number')
           
           if [ -z "$EXISTING_PR" ]; then
             echo "Creating new PR..."
-            gh pr create --base prod --head main --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
+            gh pr create --base prod --head $BRANCH_NAME --title "$PR_TITLE" --body "$PR_BODY" --reviewer "paulofoliveira" --assignee "@me"
           else
-            echo "PR from main to prod already exists (#$EXISTING_PR). Skipping creation."
+            echo "PR from $BRANCH_NAME  to prod already exists (#$EXISTING_PR). Skipping creation."
           fi
