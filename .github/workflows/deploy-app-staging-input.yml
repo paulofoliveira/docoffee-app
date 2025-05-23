@@ -1,20 +1,26 @@
-name: Deploy with Environment
+name: Mixed inputs
 
 on:
   workflow_dispatch:
     inputs:
-      environmentName:
-        description: 'Select the environment to get the manifest version.'
-        required: true
-        default: 'staging'
+      name:
         type: choice
-        options:
-          - staging
-          - production
+        description: Who to greet
+        options: 
+        - monalisa
+        - cschleiden
+      message:
+        required: true
+      use-emoji:
+        type: boolean
+        description: Include 🎉🤣 emojis
+      environment:
+        type: environment
 
 jobs:
-  deploy:
+  greet:
     runs-on: ubuntu-latest
+
     steps:
-      - name: "Show Environment Input"
-        run: echo "EnvironmentName: ${{ github.event.inputs.environmentName }}"
+    - name: Send greeting
+      run: echo "${{ github.event.inputs.message }} - ${{ github.event.inputs.name }}"
